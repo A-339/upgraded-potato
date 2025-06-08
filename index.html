@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>健身计划制定器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: linear-gradient(135deg, #f6f8fc 0%, #e9f0f7 100%);
+            min-height: 180vh;
+            padding-bottom: 120px;
+        }
+        .input-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+        .input-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+        }
+        .section-title {
+            color: #1e40af;
+            font-weight: 700;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 3rem;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 3px;
+        }
+        .form-group {
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-group:hover {
+            background: #f1f5f9;
+        }
+        .form-label {
+            color: #475569;
+            font-weight: 500;
+        }
+        .form-input {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .checkbox-group {
+            background: #f8fafc;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        .checkbox-group:hover {
+            background: #f1f5f9;
+        }
+        .checkbox-label {
+            color: #475569;
+            font-weight: 500;
+        }
+        .required-badge {
+            background: #fee2e2;
+            color: #dc2626;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+        }
+        .optional-badge {
+            background: #e0f2fe;
+            color: #0284c7;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            margin-left: 0.5rem;
+        }
+        .results-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-top: 2rem;
+            min-height: 300px;
+            max-width: 100%;
+            word-break: break-all;
+            white-space: pre-line;
+            overflow-x: auto;
+        }
+        .progress-bar {
+            height: 0.5rem;
+            background: #e2e8f0;
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 0.25rem;
+            transition: width 0.3s ease;
+        }
+        .city-search { position: relative; margin-top: 15px; }
+        .city-suggestions { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #E5E7EB; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 10; display: none; }
+        .city-suggestion-item { padding: 8px 12px; cursor: pointer; }
+        .city-suggestion-item:hover { background: #F3F4F6; }
+        .region-info { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 10px; }
+    </style>
+</head>
+<body class="py-8 px-4 md:px-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">健身计划制定器</h1>
+            <p class="text-lg text-gray-600">根据您的身体状况和目标，制定个性化的健身计划</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 当前身体状况 -->
+            <div class="input-card p-6">
+                <h2 class="section-title text-2xl mb-6">当前身体状况</h2>
+                <form id="currentForm" class="space-y-6">
+                    <!-- 基本信息 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            基本信息
+                            <span class="required-badge">必填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label block mb-2">身高 (cm)</label>
+                                <input type="number" name="height" required class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">体重 (kg)</label>
+                                <input type="number" name="weight" required class="form-input w-full">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 运动能力 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            运动能力
+                            <span class="optional-badge">选填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label block mb-2">单杠数量（个）</label>
+                                <input type="number" name="pullups" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">3公里用时（分钟）</label>
+                                <input type="number" name="running" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">仰卧起坐（个/分钟）</label>
+                                <input type="number" name="sit_ups" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">俯卧撑（个/分钟）</label>
+                                <input type="number" name="push_ups" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">深蹲（个/分钟）</label>
+                                <input type="number" name="squats" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">平板支撑（秒）</label>
+                                <input type="number" name="plank" class="form-input w-full">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 心肺功能 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            心肺功能
+                            <span class="optional-badge">选填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label block mb-2">静息心率（次/分钟）</label>
+                                <input type="number" name="resting_heart_rate" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">最大摄氧量（ml/kg/min）</label>
+                                <input type="number" name="vo2max" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">肺活量（ml）</label>
+                                <input type="number" name="vital_capacity" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">心率恢复时间（分钟）</label>
+                                <input type="number" name="heart_rate_recovery" class="form-input w-full">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 柔韧性 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            柔韧性
+                            <span class="optional-badge">选填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label block mb-2">坐位体前屈（厘米）</label>
+                                <input type="number" name="sit_and_reach" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">肩部柔韧性（厘米）</label>
+                                <input type="number" name="shoulder_flexibility" class="form-input w-full">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 个人健康信息 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            个人健康信息
+                            <span class="required-badge">必填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="form-label block mb-2">年龄</label>
+                                <input type="number" name="age" required class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">性别</label>
+                                <select name="gender" required class="form-input w-full">
+                                    <option value="">请选择</option>
+                                    <option value="male">男</option>
+                                    <option value="female">女</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>健康状况：</label>
+                            <div class="checkbox-group" id="healthConditionsGroup">
+                                <label><input type="checkbox" name="health_conditions" value="none"> 无</label>
+                                <label><input type="checkbox" name="health_conditions" value="heart_disease"> 心脏病</label>
+                                <label><input type="checkbox" name="health_conditions" value="hypertension"> 高血压</label>
+                                <label><input type="checkbox" name="health_conditions" value="diabetes"> 糖尿病</label>
+                                <label><input type="checkbox" name="health_conditions" value="asthma"> 哮喘</label>
+                                <label><input type="checkbox" name="health_conditions" value="joint_issues"> 关节问题</label>
+                                <label><input type="checkbox" name="health_conditions" value="osteoporosis"> 骨质疏松</label>
+                                <label><input type="checkbox" name="health_conditions" value="thyroid"> 甲状腺疾病</label>
+                                <label><input type="checkbox" name="health_conditions" value="kidney_disease"> 肾脏疾病</label>
+                                <label><input type="checkbox" name="health_conditions" value="liver_disease"> 肝脏疾病</label>
+                                <label><input type="checkbox" name="health_conditions" value="arthritis"> 关节炎</label>
+                                <label><input type="checkbox" name="health_conditions" value="depression"> 抑郁症</label>
+                                <label><input type="checkbox" name="health_conditions" value="anxiety"> 焦虑症</label>
+                                <label><input type="checkbox" name="health_conditions" value="sleep_disorder"> 睡眠障碍</label>
+                                <label><input type="checkbox" name="health_conditions" value="digestive_issues"> 消化系统疾病</label>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group mb-4">
+                            <label class="form-label block mb-2">运动习惯</label>
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="exercise_habits" value="none" id="noExercise" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label class="ml-2 text-sm text-gray-700">无运动习惯</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="exercise_habits" value="regular" id="regularExercise" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label class="ml-2 text-sm text-gray-700">有规律运动</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 运动详情（当选择"有规律运动"时显示） -->
+                        <div id="exerciseDetails" class="hidden space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="form-label block mb-2">每周运动频率</label>
+                                    <select name="exercise_frequency" class="form-select">
+                                        <option value="">请选择</option>
+                                        <option value="1-2">1-2次/周</option>
+                                        <option value="3-4">3-4次/周</option>
+                                        <option value="5-6">5-6次/周</option>
+                                        <option value="7+">7次以上/周</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label block mb-2">每次运动时长</label>
+                                    <select name="exercise_duration" class="form-select">
+                                        <option value="">请选择</option>
+                                        <option value="30min">30分钟以内</option>
+                                        <option value="30-60min">30-60分钟</option>
+                                        <option value="60-90min">60-90分钟</option>
+                                        <option value="90min+">90分钟以上</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="form-label block mb-2">主要运动项目（可多选）</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="running" id="exerciseRunning" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">跑步</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="swimming" id="exerciseSwimming" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">游泳</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="cycling" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">骑行</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="gym" id="exerciseGym" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">健身房</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="yoga" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">瑜伽</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="basketball" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">篮球</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="football" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">足球</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="badminton" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">羽毛球</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" name="exercise_types" value="other" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                        <label class="ml-2 text-sm text-gray-700">其他</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 跑步详情 -->
+                            <div id="runningDetails" class="hidden space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="form-label block mb-2">平均每次跑步距离（公里）</label>
+                                        <input type="number" name="running_distance" class="form-input" min="0" step="0.1">
+                                    </div>
+                                    <div>
+                                        <label class="form-label block mb-2">平均配速（分钟/公里）</label>
+                                        <input type="number" name="running_pace" class="form-input" min="0" step="0.1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 游泳详情 -->
+                            <div id="swimmingDetails" class="hidden space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="form-label block mb-2">平均每次游泳距离（米）</label>
+                                        <input type="number" name="swimming_distance" class="form-input" min="0" step="50">
+                                    </div>
+                                    <div>
+                                        <label class="form-label block mb-2">主要泳姿</label>
+                                        <select name="swimming_style" class="form-select">
+                                            <option value="">请选择</option>
+                                            <option value="freestyle">自由泳</option>
+                                            <option value="breaststroke">蛙泳</option>
+                                            <option value="backstroke">仰泳</option>
+                                            <option value="butterfly">蝶泳</option>
+                                            <option value="mixed">混合泳</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 健身房详情 -->
+                            <div id="gymDetails" class="hidden space-y-4">
+                                <div>
+                                    <label class="form-label block mb-2">主要训练项目（可多选）</label>
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="gym_types" value="strength" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                            <label class="ml-2 text-sm text-gray-700">力量训练</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="gym_types" value="cardio" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                            <label class="ml-2 text-sm text-gray-700">有氧训练</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="gym_types" value="hiit" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                            <label class="ml-2 text-sm text-gray-700">HIIT</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="gym_types" value="yoga" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                            <label class="ml-2 text-sm text-gray-700">瑜伽</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="gym_types" value="pilates" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                            <label class="ml-2 text-sm text-gray-700">普拉提</label>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <input type="checkbox" name="gym_types" value="general" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                            <label class="ml-2 text-sm text-gray-700">通用健身房</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group mb-4">
+                            <label class="form-label block mb-2">饮食习惯</label>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="diet_habits" value="none" id="noDietHabits" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label class="ml-2 text-sm text-gray-700">无</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="diet_habits" value="regular" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label class="ml-2 text-sm text-gray-700">规律饮食</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="diet_habits" value="irregular" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label class="ml-2 text-sm text-gray-700">不规律饮食</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" name="diet_habits" value="vegetarian" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                    <label class="ml-2 text-sm text-gray-700">素食</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label block mb-2">平均每日睡眠时间（小时）</label>
+                            <input type="number" name="sleep_hours" required class="form-input w-full">
+                        </div>
+
+                        <div>
+                            <label class="form-label block mb-2">其他健康相关说明</label>
+                            <textarea name="health_notes" rows="3" class="form-input w-full"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- 目标身体状况 -->
+            <div class="input-card p-6">
+                <h2 class="section-title text-2xl mb-6">目标身体状况</h2>
+                <form id="targetForm" class="space-y-6">
+                    <!-- 基础目标 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            基础目标
+                            <span class="required-badge">必填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label block mb-2">目标身高 (cm)</label>
+                                <input type="number" name="targetHeight" required class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标体重 (kg)</label>
+                                <input type="number" name="targetWeight" required class="form-input w-full">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 运动能力目标 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            运动能力目标
+                            <span class="optional-badge">选填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label block mb-2">目标单杠数量（个）</label>
+                                <input type="number" name="targetPullups" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标3公里用时（分钟）</label>
+                                <input type="number" name="targetRunning" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标仰卧起坐（个/分钟）</label>
+                                <input type="number" name="targetSitUps" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标俯卧撑（个/分钟）</label>
+                                <input type="number" name="targetPushUps" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标深蹲（个/分钟）</label>
+                                <input type="number" name="targetSquats" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标平板支撑（秒）</label>
+                                <input type="number" name="targetPlank" class="form-input w-full">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 心肺功能目标 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            心肺功能目标
+                            <span class="optional-badge">选填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label block mb-2">目标静息心率（次/分钟）</label>
+                                <input type="number" name="targetRestingHeartRate" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标最大摄氧量（ml/kg/min）</label>
+                                <input type="number" name="targetVo2max" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标肺活量（ml）</label>
+                                <input type="number" name="targetVitalCapacity" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标心率恢复时间（分钟）</label>
+                                <input type="number" name="targetHeartRateRecovery" class="form-input w-full">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 柔韧性目标 -->
+                    <div class="form-group">
+                        <h3 class="text-lg font-medium text-gray-700 mb-4">
+                            柔韧性目标
+                            <span class="optional-badge">选填</span>
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label block mb-2">目标坐位体前屈（厘米）</label>
+                                <input type="number" name="targetSitAndReach" class="form-input w-full">
+                            </div>
+                            <div>
+                                <label class="form-label block mb-2">目标肩部柔韧性（厘米）</label>
+                                <input type="number" name="targetShoulderFlexibility" class="form-input w-full">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 地区和城市选择部分 -->
+        <div class="input-card p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">地区和城市信息</h2>
+            <div class="city-search mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">所在城市</label>
+                <input type="text" name="city" class="form-control" placeholder="请输入城市（如：北京、上海）" required autocomplete="off">
+                <div class="city-suggestions" id="citySuggestions"></div>
+            </div>
+            <div class="region-info" id="regionInfo" style="display:none;">
+                <h3 class="text-lg font-medium text-gray-700 mb-2">地区信息</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-600"><span class="font-medium">地区名称：</span><span id="regionName"></span></p>
+                        <p class="text-gray-600"><span class="font-medium">气候特点：</span><span id="regionClimate"></span></p>
+                        <p class="text-gray-600"><span class="font-medium">海拔特征：</span><span id="regionAltitude"></span></p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600"><span class="font-medium">空气质量：</span><span id="regionAirQuality"></span></p>
+                        <p class="text-gray-600"><span class="font-medium">季节特征：</span><span id="regionSeasonal"></span></p>
+                        <p class="text-gray-600"><span class="font-medium">包含省份：</span><span id="regionProvinces"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-8">
+            <button onclick="generatePlan()" class="btn-primary">
+                生成健身计划
+            </button>
+        </div>
+
+        <div id="results" class="results-card hidden">
+            <!-- 结果内容将通过JavaScript动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 城市与地区映射（示例，实际可扩展）
+        const CITY_REGION_MAP = {
+            '北京': 'NORTH', '天津': 'NORTH', '石家庄': 'NORTH', '呼和浩特': 'NORTH',
+            '上海': 'EAST', '南京': 'EAST', '杭州': 'EAST', '合肥': 'EAST', '福州': 'EAST', '南昌': 'EAST', '济南': 'EAST',
+            '郑州': 'CENTRAL', '武汉': 'CENTRAL', '长沙': 'CENTRAL', '广州': 'CENTRAL', '南宁': 'CENTRAL', '海口': 'CENTRAL',
+            '重庆': 'SOUTHWEST', '成都': 'SOUTHWEST', '贵阳': 'SOUTHWEST', '昆明': 'SOUTHWEST', '拉萨': 'SOUTHWEST',
+            '西安': 'NORTHWEST', '兰州': 'NORTHWEST', '西宁': 'NORTHWEST', '银川': 'NORTHWEST', '乌鲁木齐': 'NORTHWEST'
+        };
+
+        const REGIONS = {
+            'NORTH': {
+                name: '北方地区',
+                provinces: ['北京','天津','河北','山西','内蒙古'],
+                characteristics: {
+                    climate: '温带季风气候，冬季寒冷干燥，夏季炎热多雨',
+                    altitude: '以平原和高原为主',
+                    airQuality: '部分城市冬季有雾霾',
+                    seasonalFeatures: ['冬季寒冷','春秋短暂','夏季炎热']
+                }
+            },
+            'EAST': {
+                name: '东部地区',
+                provinces: ['上海','江苏','浙江','安徽','福建','江西','山东'],
+                characteristics: {
+                    climate: '亚热带季风气候，湿润多雨',
+                    altitude: '以平原和丘陵为主',
+                    airQuality: '整体较好，沿海空气流通',
+                    seasonalFeatures: ['四季分明','梅雨季']
+                }
+            },
+            'CENTRAL': {
+                name: '中部地区',
+                provinces: ['河南','湖北','湖南','广东','广西','海南'],
+                characteristics: {
+                    climate: '亚热带季风气候，湿热',
+                    altitude: '以平原、丘陵为主',
+                    airQuality: '部分城市湿度大',
+                    seasonalFeatures: ['夏季炎热','冬季温和']
+                }
+            },
+            'SOUTHWEST': {
+                name: '西南地区',
+                provinces: ['重庆','四川','贵州','云南','西藏'],
+                characteristics: {
+                    climate: '高原山地气候、亚热带季风气候',
+                    altitude: '以高原、山地为主',
+                    airQuality: '整体较好，部分地区海拔高',
+                    seasonalFeatures: ['气候多样','垂直地带性明显']
+                }
+            },
+            'NORTHWEST': {
+                name: '西北地区',
+                provinces: ['陕西','甘肃','青海','宁夏','新疆'],
+                characteristics: {
+                    climate: '温带大陆性气候，干旱少雨',
+                    altitude: '以高原、盆地为主',
+                    airQuality: '气候干燥，风沙大',
+                    seasonalFeatures: ['昼夜温差大','日照充足']
+                }
+            }
+        };
+
+        // 获取天气信息
+        async function getWeatherData(city) {
+            const apiKey = '961ebe6ebfd54eb4a0ed3f3c5d9b244d'; // 替换为你的和风天气API Key
+            if (!apiKey) { // 仅检查apiKey是否为空或未定义
+                console.error("请配置和风天气API Key才能获取天气信息！");
+                alert("请配置和风天气API Key才能获取天气信息！");
+                return null;
+            }
+
+            try {
+                // 1. 获取城市ID (和风天气需要城市ID)
+                const geoResponse = await fetch(`https://geoapi.qweather.com/v2/city/lookup?location=${encodeURIComponent(city)}&key=${apiKey}`);
+                const geoData = await geoResponse.json();
+
+                if (geoData.code !== '200' || !geoData.location || geoData.location.length === 0) {
+                    console.error('获取城市ID失败:', geoData.code, geoData.refer);
+                    return null;
+                }
+                const cityId = geoData.location[0].id;
+
+                // 2. 获取实时天气
+                const weatherResponse = await fetch(`https://devapi.qweather.com/v7/weather/now?location=${cityId}&key=${apiKey}`);
+                const weatherData = await weatherResponse.json();
+
+                if (weatherData.code !== '200' || !weatherData.now) {
+                    console.error('获取实时天气失败:', weatherData.code, weatherData.refer);
+                    return null;
+                }
+                const now = weatherData.now;
+
+                // 3. 获取天气预警
+                const warningResponse = await fetch(`https://devapi.qweather.com/v7/warning/now?location=${cityId}&key=${apiKey}`);
+                const warningData = await warningResponse.json();
+
+                const warnings = (warningData.code === '200' && warningData.warning) ? warningData.warning : [];
+
+                return {
+                    temperature: now.temp,
+                    condition: now.text,
+                    description: now.text,
+                    humidity: now.humidity,
+                    windSpeed: now.windSpeed,
+                    windDirection: now.windDir,
+                    updateTime: now.obsTime,
+                    warnings: warnings,
+                    isExtremeWeather: checkExtremeWeather(now, warnings)
+                };
+
+            } catch (error) {
+                console.error('获取天气信息失败:', error);
+                return null;
+            }
+        }
+
+        // 检查是否为极端天气
+        function checkExtremeWeather(weatherInfo, warnings) {
+            const temp = parseFloat(weatherInfo.temp);
+            const humidity = parseFloat(weatherInfo.humidity);
+            const windSpeed = parseFloat(weatherInfo.windSpeed); // 和风天气返回的是km/h
+            
+            // 检查温度极端情况
+            if (temp <= -10 || temp >= 35) return true;
+            
+            // 检查湿度极端情况
+            if (humidity >= 90) return true;
+
+            // 检查大风（和风天气风速单位km/h）
+            if (windSpeed >= 40) return true; // 大风等级（8级风开始）
+            
+            // 检查天气预警（和风天气预警类型更细致，这里只检查预警是否存在）
+            return warnings.length > 0; 
+        }
+
+        // 根据天气调整运动计划
+        function adjustWorkoutPlanForWeather(workoutPlan, weatherData) {
+            if (!weatherData) return workoutPlan;
+
+            const { temperature, condition, humidity, windSpeed, windDirection, warnings, isExtremeWeather } = weatherData;
+            let adjustedPlan = [...workoutPlan];
+            let weatherAdvice = [];
+
+            // 添加天气信息
+            weatherAdvice.push(`当前天气：${condition}，温度：${temperature}℃，湿度：${humidity}%，风速：${windSpeed}km/h，风向：${windDirection}`);
+            weatherAdvice.push(`更新时间：${weatherData.updateTime}`);
+
+            // 检查天气预警
+            if (warnings && warnings.length > 0) {
+                weatherAdvice.push("\n=== 天气预警信息 ===");
+                warnings.forEach(warning => {
+                    weatherAdvice.push(`- ${warning.typeName} ${warning.level}预警：${warning.text}`);
+                });
+            }
+
+            // 极端天气处理
+            if (isExtremeWeather) {
+                weatherAdvice.push("\n=== 极端天气训练建议 ===");
+                
+                // 温度相关建议
+                if (temperature <= -10) {
+                    weatherAdvice.push("极寒天气注意事项：");
+                    weatherAdvice.push("- 建议完全转为室内训练");
+                    weatherAdvice.push("- 室内温度保持在18-22℃");
+                    weatherAdvice.push("- 训练前充分热身15-20分钟");
+                    weatherAdvice.push("- 准备保暖衣物，防止训练后着凉");
+                    weatherAdvice.push("- 注意室内通风，保持空气流通");
+                } else if (temperature >= 35) {
+                    weatherAdvice.push("高温天气注意事项：");
+                    weatherAdvice.push("- 建议完全转为室内训练");
+                    weatherAdvice.push("- 室内温度保持在24-26℃");
+                    weatherAdvice.push("- 训练强度降低20-30%");
+                    weatherAdvice.push("- 每15-20分钟补充一次水分");
+                    weatherAdvice.push("- 准备防暑药品，如藿香正气水");
+                }
+
+                // 湿度相关建议
+                if (humidity >= 90) {
+                    weatherAdvice.push("高湿度天气注意事项：");
+                    weatherAdvice.push("- 建议转为室内训练");
+                    weatherAdvice.push("- 降低训练强度");
+                    weatherAdvice.push("- 增加休息时间");
+                    weatherAdvice.push("- 注意补充电解质");
+                }
+
+                // 大风相关建议
+                if (windSpeed >= 40) {
+                    weatherAdvice.push("大风天气注意事项：");
+                    weatherAdvice.push("- 禁止户外运动");
+                    weatherAdvice.push("- 建议转为室内训练");
+                    weatherAdvice.push("- 注意防高空坠物");
+                }
+
+                // 特殊天气预警处理（和风天气预警有type和level，这里只判断是否有预警）
+                if (warnings.length > 0) {
+                    weatherAdvice.push("由于存在天气预警，建议：");
+                    weatherAdvice.push("- 严格遵守当地气象部门的预警建议");
+                    weatherAdvice.push("- 优先考虑室内运动，避免风险");
+                    weatherAdvice.push("- 密切关注天气变化，确保安全");
+                }
+
+                // 调整训练计划
+                adjustedPlan = adjustedPlan.map(plan => {
+                    if (plan.includes('户外')) {
+                        return plan.replace('户外', '室内');
+                    }
+                    return plan;
+                });
+            }
+
+            // 添加天气建议到计划中
+            if (weatherAdvice.length > 0) {
+                adjustedPlan.push("\n=== 天气相关建议 ===");
+                adjustedPlan.push(...weatherAdvice);
+            }
+
+            // 将调整后的计划（数组）合并成一个字符串返回
+            return adjustedPlan.join('\n');
+        }
+
+        // 根据地域调整训练计划
+        function adjustWorkoutPlanForRegion(workoutPlan, region) {
+            if (!region) return workoutPlan;
+
+            let adjustedPlan = [...workoutPlan];
+            let regionAdvice = [];
+
+            // 根据地域特点添加建议
+            switch (region) {
+                case 'NORTH':
+                    regionAdvice.push("北方地区训练建议：");
+                    regionAdvice.push("- 冬季注意保暖，建议室内运动为主");
+                    regionAdvice.push("- 夏季注意防暑，选择早晚时段运动");
+                    regionAdvice.push("- 雾霾天气建议转为室内运动");
+                    regionAdvice.push("- 注意补充水分，防止干燥");
+                    break;
+                case 'EAST':
+                    regionAdvice.push("东部地区训练建议：");
+                    regionAdvice.push("- 梅雨季节注意防潮，选择室内运动");
+                    regionAdvice.push("- 台风天气避免户外运动");
+                    regionAdvice.push("- 夏季注意防暑降温");
+                    regionAdvice.push("- 沿海地区可适当增加水上运动");
+                    break;
+                case 'CENTRAL':
+                    regionAdvice.push("中部地区训练建议：");
+                    regionAdvice.push("- 夏季注意防暑，选择早晚时段运动");
+                    regionAdvice.push("- 雨季注意防潮，准备室内运动方案");
+                    regionAdvice.push("- 注意补充电解质，防止中暑");
+                    regionAdvice.push("- 选择通风良好的运动场所");
+                    break;
+                case 'SOUTHWEST':
+                    regionAdvice.push("西南地区训练建议：");
+                    regionAdvice.push("- 高原地区注意循序渐进，防止高原反应");
+                    regionAdvice.push("- 注意防晒，避免强紫外线伤害");
+                    regionAdvice.push("- 保持充足水分，防止干燥");
+                    regionAdvice.push("- 适当降低运动强度，延长适应期");
+                    break;
+                case 'NORTHWEST':
+                    regionAdvice.push("西北地区训练建议：");
+                    regionAdvice.push("- 沙尘天气避免户外运动");
+                    regionAdvice.push("- 注意防晒和保湿");
+                    regionAdvice.push("- 选择室内运动为主");
+                    regionAdvice.push("- 注意补充水分，防止干燥");
+                    break;
+            }
+
+            // 添加地域建议到计划中
+            if (regionAdvice.length > 0) {
+                adjustedPlan.push("\n=== 地域相关建议 ===");
+                adjustedPlan.push(...regionAdvice);
+            }
+
+            return adjustedPlan;
+        }
+
+        // 移除地图相关代码
+        document.addEventListener('DOMContentLoaded', function() {
+            // 移除地区选择处理 (原有的 regionPaths 监听)
+            // 移除地图图例 (原有的 legend 创建)
+
+            const cityInput = document.querySelector('input[name="city"]');
+            const citySuggestions = document.getElementById('citySuggestions');
+            const regionInfoDiv = document.getElementById('regionInfo');
+            const regionNameSpan = document.getElementById('regionName');
+            const regionClimateSpan = document.getElementById('regionClimate');
+            const regionAltitudeSpan = document.getElementById('regionAltitude');
+            const regionAirQualitySpan = document.getElementById('regionAirQuality');
+            const regionSeasonalSpan = document.getElementById('regionSeasonal');
+            const regionProvincesSpan = document.getElementById('regionProvinces');
+
+            // 城市输入自动识别地区
+            cityInput.addEventListener('blur', function() {
+                const city = cityInput.value.trim();
+                const regionKey = CITY_REGION_MAP[city];
+                if (regionKey && REGIONS[regionKey]) {
+                    const region = REGIONS[regionKey];
+                    regionNameSpan.textContent = region.name;
+                    regionClimateSpan.textContent = region.characteristics.climate;
+                    regionAltitudeSpan.textContent = region.characteristics.altitude;
+                    regionAirQualitySpan.textContent = region.characteristics.airQuality;
+                    regionSeasonalSpan.textContent = region.characteristics.seasonalFeatures.join('、');
+                    regionProvincesSpan.textContent = region.provinces.join('、');
+                    regionInfoDiv.style.display = 'block';
+                } else {
+                    regionInfoDiv.style.display = 'none';
+                }
+            });
+
+            // 城市搜索建议处理 (补全)
+            cityInput.addEventListener('input', function() {
+                const value = this.value.trim();
+                if (value.length > 0) {
+                    const possibleCities = Object.keys(CITY_REGION_MAP).filter(city => 
+                        city.includes(value)
+                    );
+                    if (possibleCities.length > 0) {
+                        citySuggestions.innerHTML = possibleCities
+                            .map(city => `<div class="city-suggestion-item" data-city="${city}">${city}</div>`)
+                            .join('');
+                        citySuggestions.style.display = 'block';
+
+                        document.querySelectorAll('.city-suggestion-item').forEach(item => {
+                            item.addEventListener('click', function() {
+                                cityInput.value = this.dataset.city;
+                                citySuggestions.style.display = 'none';
+                                cityInput.dispatchEvent(new Event('blur')); // 触发blur事件，更新地区信息
+                            });
+                        });
+                    } else {
+                        citySuggestions.style.display = 'none';
+                    }
+                } else {
+                    citySuggestions.style.display = 'none';
+                }
+            });
+
+            // 点击外部关闭建议
+            document.addEventListener('click', function(e) {
+                if (!cityInput.contains(e.target) && !citySuggestions.contains(e.target)) {
+                    citySuggestions.style.display = 'none';
+                }
+            });
+
+            // 运动习惯显示/隐藏逻辑 (补全)
+            const noExerciseCheckbox = document.getElementById('noExercise');
+            const regularExerciseCheckbox = document.getElementById('regularExercise');
+            const exerciseDetailsDiv = document.getElementById('exerciseDetails');
+
+            function toggleExerciseDetails() {
+                if (regularExerciseCheckbox.checked) {
+                    exerciseDetailsDiv.classList.remove('hidden');
+                } else {
+                    exerciseDetailsDiv.classList.add('hidden');
+                }
+            }
+
+            noExerciseCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    regularExerciseCheckbox.checked = false;
+                    exerciseDetailsDiv.classList.add('hidden');
+                }
+            });
+
+            regularExerciseCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    noExerciseCheckbox.checked = false;
+                    exerciseDetailsDiv.classList.remove('hidden');
+                } else {
+                    exerciseDetailsDiv.classList.add('hidden');
+                }
+            });
+
+            // 初始加载时检查运动习惯
+            toggleExerciseDetails();
+
+            // 主要运动项目显示/隐藏逻辑 (补全)
+            const exerciseRunningCheckbox = document.getElementById('exerciseRunning');
+            const exerciseSwimmingCheckbox = document.getElementById('exerciseSwimming');
+            const exerciseGymCheckbox = document.getElementById('exerciseGym');
+            const runningDetailsDiv = document.getElementById('runningDetails');
+            const swimmingDetailsDiv = document.getElementById('swimmingDetails');
+            const gymDetailsDiv = document.getElementById('gymDetails');
+
+            function toggleSpecificExerciseDetails() {
+                runningDetailsDiv.classList.toggle('hidden', !exerciseRunningCheckbox.checked);
+                swimmingDetailsDiv.classList.toggle('hidden', !exerciseSwimmingCheckbox.checked);
+                gymDetailsDiv.classList.toggle('hidden', !exerciseGymCheckbox.checked);
+            }
+
+            exerciseRunningCheckbox.addEventListener('change', toggleSpecificExerciseDetails);
+            exerciseSwimmingCheckbox.addEventListener('change', toggleSpecificExerciseDetails);
+            exerciseGymCheckbox.addEventListener('change', toggleSpecificExerciseDetails);
+
+            // 初始加载时检查特定运动详情
+            toggleSpecificExerciseDetails();
+
+            // 健康状况"无"选项互斥逻辑 (补全)
+            const healthConditionsGroup = document.getElementById('healthConditionsGroup');
+            const healthNoneCheckbox = healthConditionsGroup.querySelector('input[value="none"]');
+            const otherHealthCheckboxes = healthConditionsGroup.querySelectorAll('input[type="checkbox"]:not([value="none"])');
+
+            healthNoneCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    otherHealthCheckboxes.forEach(cb => cb.checked = false);
+                }
+            });
+
+            otherHealthCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    if (this.checked) {
+                        healthNoneCheckbox.checked = false;
+                    }
+                });
+            });
+
+            // 饮食习惯"无"选项互斥逻辑 (补全)
+            const dietHabitsGroup = document.querySelector('div.checkbox-group label.form-label + div.grid');
+            const dietNoneCheckbox = document.getElementById('noDietHabits');
+            const otherDietCheckboxes = dietHabitsGroup.querySelectorAll('input[type="checkbox"]:not([value="none"])');
+            
+            dietNoneCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    otherDietCheckboxes.forEach(cb => cb.checked = false);
+                }
+            });
+
+            otherDietCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    if (this.checked) {
+                        dietNoneCheckbox.checked = false;
+                    }
+                });
+            });
+        });
+
+        // 修改生成计划逻辑，增加预计达成目标所需时长和预计总消耗卡路里
+        function estimateGoalDurationAndCalories(currentData, targetData) {
+            // 体重目标
+            const currentWeight = parseFloat(currentData.weight);
+            const targetWeight = parseFloat(targetData.weight);
+            const weightDiff = Math.abs(targetWeight - currentWeight);
+            // 以每周健康减重/增重0.5kg为标准
+            const weeks = weightDiff > 0 ? Math.ceil(weightDiff / 0.5) : 0;
+            // 1kg脂肪约=7700千卡
+            const totalCalories = weightDiff > 0 ? Math.round(weightDiff * 7700) : 0;
+            return {
+                weeks,
+                totalCalories
+            };
+        }
+
+        // 训练计划模板
+        const workoutPlans = {
+          running: {
+            beginner: '慢跑20-30分钟，配合拉伸。',
+            intermediate: '慢跑40分钟+变速跑10分钟，配合核心训练。',
+            advanced: '间歇跑训练60分钟，配合力量训练。'
+          },
+          swimming: {
+            beginner: '自由泳20分钟，注意呼吸节奏。',
+            intermediate: '混合泳30分钟，配合水中拉伸。',
+            advanced: '高强度间歇游泳40分钟，配合陆上力量训练。'
+          },
+          cycling: {
+            beginner: '骑行30分钟，保持中低强度。',
+            intermediate: '骑行60分钟，包含爬坡训练。',
+            advanced: '高强度间歇骑行90分钟，配合核心训练。'
+          },
+          gym: {
+            beginner: '全身基础器械训练30分钟。',
+            intermediate: '分部位力量训练45分钟+有氧20分钟。',
+            advanced: '高强度力量训练60分钟+HIIT15分钟。'
+          },
+          yoga: {
+            beginner: '基础瑜伽体式30分钟，注重呼吸。',
+            intermediate: '流瑜伽45分钟，提升柔韧性。',
+            advanced: '高级瑜伽60分钟，挑战高难度体式。'
+          },
+          basketball: {
+            beginner: '基础运球、投篮训练30分钟。',
+            intermediate: '半场对抗+专项训练60分钟。',
+            advanced: '全场对抗+专项体能训练90分钟。'
+          },
+          football: {
+            beginner: '基础带球、传球训练30分钟。',
+            intermediate: '小场对抗+专项训练60分钟。',
+            advanced: '全场对抗+专项体能训练90分钟。'
+          },
+          badminton: {
+            beginner: '基础挥拍、步伐训练30分钟。',
+            intermediate: '对打训练60分钟，提升反应。',
+            advanced: '高强度对抗训练90分钟。'
+          },
+          other: {
+            beginner: '选择喜欢的有氧或力量训练30分钟。',
+            intermediate: '多样化训练45分钟。',
+            advanced: '高强度交叉训练60分钟。'
+          },
+          general: {
+            beginner: '快走或轻度有氧30分钟。',
+            intermediate: '有氧+力量训练各30分钟。',
+            advanced: '高强度有氧+力量训练60分钟。'
+          }
+        };
+        // 饮食建议模板
+        const breakfastList = [
+          '燕麦粥+鸡蛋+牛奶',
+          '全麦面包+花生酱+水果',
+          '杂粮粥+煮蛋+坚果',
+          '玉米+豆浆+鸡蛋',
+          '牛奶+香蕉+全麦面包',
+          '蛋白粉+水果沙拉',
+          '小米粥+鸡蛋+蔬菜'
+        ];
+        const lunchList = [
+          '糙米饭+鸡胸肉+西兰花',
+          '意面+牛肉+蔬菜沙拉',
+          '米饭+鱼+炒时蔬',
+          '红薯+鸡腿+蔬菜',
+          '米饭+虾仁+青菜',
+          '全麦面+鸡蛋+蔬菜',
+          '米饭+豆腐+蔬菜'
+        ];
+        const dinnerList = [
+          '杂粮饭+鸡胸肉+蔬菜',
+          '米饭+牛肉+西红柿炒蛋',
+          '全麦面+鱼+蔬菜',
+          '红薯+鸡蛋+蔬菜',
+          '米饭+虾仁+西兰花',
+          '蛋白粉+水果',
+          '小米粥+蔬菜+鸡蛋'
+        ];
+        const snackList = [
+          '坚果/酸奶',
+          '水果/能量棒',
+          '低脂奶酪/全麦饼干',
+          '蛋白棒/香蕉',
+          '酸奶/坚果',
+          '水果/蛋白粉',
+          '全麦面包/牛奶'
+        ];
+
+        // 修改生成计划主函数
+        async function generateFitnessPlan(currentData, targetData, estimate) {
+            try {
+                // 获取天气信息
+                const weatherData = await getWeatherData(currentData.city);
+                
+                // 获取用户选择的主要运动项目
+                const exerciseTypes = currentData.exercise_types || [];
+                
+                // 生成每日训练计划
+                const weekDays = ['周一','周二','周三','周四','周五','周六','周日'];
+                let weekPlan = '';
+                
+                for (let i = 0; i < 7; i++) {
+                    weekPlan += `<div class='mb-4 p-4 bg-gray-50 rounded'>`;
+                    weekPlan += `<div class='font-bold text-blue-800 mb-2'>${weekDays[i]}</div>`;
+                    
+                    // 添加饮食计划
+                    weekPlan += `<ul class='mb-2'>
+                        <li><strong>早餐：</strong>${breakfastList[i]}</li>
+                        <li><strong>午餐：</strong>${lunchList[i]}</li>
+                        <li><strong>晚餐：</strong>${dinnerList[i]}</li>
+                        <li><strong>加餐建议：</strong>${snackList[i]}</li>
+                    </ul>`;
+
+                    // 添加训练计划
+                    if (i === 6) {
+                        // 周日安排休息
+                        weekPlan += `<div><strong>锻炼内容：</strong>休息日：\n- 轻度拉伸\n- 散步30分钟\n- 充分休息恢复</div>`;
+                    } else {
+                        // 根据用户运动类型循环安排训练
+                        const planIndex = i % exerciseTypes.length;
+                        const exerciseTypeKey = exerciseTypes[planIndex];
+                        const level = getExerciseLevel(currentData);
+                        const workout = workoutPlans[exerciseTypeKey]?.[level] || workoutPlans.general[level];
+                        
+                        // 根据天气调整训练计划
+                        const adjustedWorkout = weatherData ? 
+                            adjustWorkoutPlanForWeather([workout], weatherData) : 
+                            workout;
+                        
+                        weekPlan += `<div><strong>锻炼内容：</strong><pre class='whitespace-pre-wrap'>${adjustedWorkout}</pre></div>`;
+                    }
+                    
+                    weekPlan += `</div>`;
+                }
+
+                // 生成健康注意事项
+                const healthPrecautions = generateHealthPrecautions(
+                    currentData.health_conditions || [],
+                    currentData.health_notes || '',
+                    currentData.other_health_issues || ''
+                );
+
+                // 更新计划显示
+                let planHtml = '';
+                planHtml += `<h2 class='text-2xl font-bold mb-4 text-blue-700'>个性化一周健身与饮食计划</h2>`;
+                
+                // 估算达成时长和卡路里显示
+                if (estimate.weeks > 0) {
+                    planHtml += `<div class='mt-4 p-4 bg-blue-50 rounded mb-4'>
+                        <p class='text-blue-700 font-semibold'>预计达成目标所需时长：<span class='font-bold'>${estimate.weeks} 周</span></p>
+                        <p class='text-blue-700 font-semibold'>预计总消耗卡路里：<span class='font-bold'>${estimate.totalCalories} 千卡</span></p>
+                    </div>`;
+                }
+                planHtml += weekPlan;
+                if (healthPrecautions) {
+                    planHtml += `<h3 class='text-xl font-semibold mt-6 mb-2 text-red-700'>健康注意事项</h3>`;
+                    planHtml += `<div class='mb-4 text-red-600 p-4 bg-red-50 rounded'>
+                        <ul class='list-disc pl-5'>${healthPrecautions}</ul>
+                    </div>`;
+                }
+                planHtml += `<h3 class='text-xl font-semibold mt-6 mb-2 text-gray-800'>训练注意事项</h3>`;
+                planHtml += `<div class='mb-4'>
+                    <ul class='list-disc pl-5'>
+                        <li>每次训练前充分热身，训练后做好放松</li>
+                        <li>根据身体状况调整训练强度</li>
+                        <li>保持正确的训练姿势</li>
+                        <li>注意补充水分和营养</li>
+                        <li>如感觉不适，立即停止训练</li>
+                    </ul>
+                </div>`;
+                planHtml += `<div class='mt-6 text-gray-500 text-sm'>* 本计划仅供参考，具体请结合个人实际情况和医生建议。</div>`;
+                
+                return planHtml;
+            } catch (e) {
+                console.error('生成计划出错:', e);
+                return '<div class="text-red-600">生成计划时发生错误，请检查输入或联系管理员。</div>';
+            }
+        }
+
+        // 获取训练水平
+        function getExerciseLevel(data) {
+            // 根据用户数据判断训练水平
+            const hasRegularExercise = data.exercise_habits?.includes('regular');
+            const exerciseFrequency = data.exercise_frequency;
+            const exerciseDuration = data.exercise_duration;
+            
+            if (!hasRegularExercise) return 'beginner';
+            if (exerciseFrequency === '1-2' || exerciseDuration === '30min') return 'beginner';
+            if (exerciseFrequency === '3-4' || exerciseDuration === '30-60min') return 'intermediate';
+            return 'advanced';
+        }
+
+        // 新增：生成健康注意事项
+        function generateHealthPrecautions(healthConditions, healthNotes, otherHealthIssues) {
+            let precautions = [];
+
+            if (healthConditions.includes('heart_disease')) {
+                precautions.push('<li>**心脏病史：**避免高强度运动，运动前务必咨询医生，并在专业人士指导下进行。</li>');
+            }
+            if (healthConditions.includes('hypertension')) {
+                precautions.push('<li>**高血压：**避免憋气、爆发力训练，注意运动强度，保持呼吸平稳。</li>');
+            }
+            if (healthConditions.includes('diabetes')) {
+                precautions.push('<li>**糖尿病：**运动前监测血糖，随身携带糖果，注意运动时间与胰岛素或药物的匹配。</li>');
+            }
+            // 将 joint_issues 统一为 joint_pain
+            if (healthConditions.includes('joint_pain') || healthConditions.includes('joint_issues')) {
+                precautions.push('<li>**关节疼痛/问题：**避免高冲击运动，选择游泳、骑行、椭圆机等低冲击运动，加强关节周围肌肉训练。</li>');
+            }
+            if (healthConditions.includes('asthma') || healthConditions.includes('respiratory_issues')) {
+                precautions.push('<li>**哮喘/呼吸系统问题：**避免空气质量差的环境下运动，注意呼吸节奏，随身携带急救药物。</li>');
+            }
+            if (healthConditions.includes('pregnancy')) {
+                precautions.push('<li>**怀孕：**运动前咨询妇产科医生，选择适合孕妇的低强度运动，避免腹部受压和剧烈运动。</li>');
+            }
+            if (healthConditions.includes('recent_surgery')) {
+                precautions.push('<li>**近期手术：**严格遵循医生建议，避免过早进行剧烈运动，确保伤口完全恢复。</li>');
+            }
+            if (healthConditions.includes('osteoporosis')) {
+                precautions.push('<li>**骨质疏松：**避免高冲击、高风险运动，注重力量训练和平衡练习，预防跌倒。</li>');
+            }
+            if (healthConditions.includes('thyroid')) {
+                precautions.push('<li>**甲状腺疾病：**根据具体情况调整运动强度，避免过度疲劳，定期监测甲状腺功能。</li>');
+            }
+            if (healthConditions.includes('kidney_disease')) {
+                precautions.push('<li>**肾脏疾病：**限制蛋白质摄入，避免过量运动，减轻肾脏负担。</li>');
+            }
+            if (healthConditions.includes('liver_disease')) {
+                precautions.push('<li>**肝脏疾病：**避免过度劳累，选择中低强度运动，注意营养均衡。</li>');
+            }
+            if (healthConditions.includes('arthritis')) {
+                precautions.push('<li>**关节炎：**选择对关节友好的运动（如游泳、瑜伽），避免加重关节负担，注意运动前后拉伸。</li>');
+            }
+            if (healthConditions.includes('depression') || healthConditions.includes('anxiety')) {
+                precautions.push('<li>**抑郁症/焦虑症：**选择能带来愉悦感的运动，保持规律运动，必要时结合心理咨询。</li>');
+            }
+            if (healthConditions.includes('sleep_disorder')) {
+                precautions.push('<li>**睡眠障碍：**白天适度运动有助于改善睡眠，但睡前避免剧烈运动。</li>');
+            }
+            if (healthConditions.includes('digestive_issues')) {
+                precautions.push('<li>**消化系统疾病：**运动期间避免消化不良，餐后不宜立即剧烈运动，注意饮食清淡。</li>');
+            }
+
+            if (healthNotes.trim() !== '') {
+                precautions.push(`<li>**个人健康说明：**${healthNotes.trim()}</li>`);
+            }
+            if (otherHealthIssues.trim() !== '') {
+                precautions.push(`<li>**其他健康问题：**${otherHealthIssues.trim()}</li>`);
+            }
+
+            return precautions.join('');
+        }
+
+        // 获取地区信息
+        function getRegion(city) {
+            const regionMap = {
+                '北京': 'NORTH',
+                '上海': 'EAST',
+                '广州': 'CENTRAL',
+                '深圳': 'CENTRAL',
+                '成都': 'SOUTHWEST',
+                '重庆': 'SOUTHWEST',
+                '西安': 'NORTHWEST',
+                '兰州': 'NORTHWEST'
+            };
+            return regionMap[city] || 'CENTRAL';
+        }
+
+        // 获取当前季节
+        function getCurrentSeason() {
+            const month = new Date().getMonth() + 1;
+            if (month >= 3 && month <= 5) return 'spring';
+            if (month >= 6 && month <= 8) return 'summer';
+            if (month >= 9 && month <= 11) return 'autumn';
+            return 'winter';
+        }
+
+        // 根据地区获取对应的季节建议 (已移至全局)
+        const regionWorkoutPlans = {
+            NORTH: {
+                winter: '冬季训练建议：\n- 室内有氧：跑步机、椭圆机、动感单车\n- 力量训练：深蹲、卧推、硬拉\n- 注意事项：充分热身，注意保暖，防止感冒\n- 推荐运动：室内游泳、瑜伽、普拉提\n- 饮食建议：增加蛋白质摄入，补充维生素D\n- 训练时间：建议在10:00-16:00之间进行室内训练\n- 极端天气建议：\n  * 气温低于-10℃时，建议完全转为室内训练\n  * 室内温度保持在18-22℃为宜\n  * 训练前充分热身15-20分钟\n  * 准备保暖衣物，防止训练后着凉\n  * 注意室内通风，保持空气流通',
+                summer: '夏季训练建议：\n- 户外有氧：慢跑、骑行（避开高温时段）\n- 力量训练：引体向上、俯卧撑、深蹲\n- 注意事项：注意防晒，及时补充水分，防止中暑\n- 推荐运动：晨跑、夜跑、游泳、沙滩排球\n- 饮食建议：增加电解质补充，注意防暑降温\n- 训练时间：建议在6:00-9:00或18:00-20:00进行户外训练\n- 极端天气建议：\n  * 气温超过35℃时，建议转为室内训练\n  * 室内温度保持在24-26℃为宜\n  * 训练强度降低20-30%\n  * 每15-20分钟补充一次水分\n  * 准备防暑药品，如藿香正气水',
+                spring: '春季训练建议：\n- 户外活动：踏青、远足、放风筝\n- 力量训练：轻度器械或自重训练\n- 注意事项：注意保暖，循序渐进，防止花粉过敏\n- 推荐运动：徒步、骑行、羽毛球、网球\n- 饮食建议：增加新鲜蔬果摄入，补充维生素\n- 训练时间：建议在9:00-11:00或15:00-17:00进行户外训练',
+                autumn: '秋季训练建议：\n- 户外有氧：慢跑、登山、球类运动\n- 力量训练：适应性训练，增强抵抗力\n- 注意事项：天气转凉，注意关节保暖，防止运动损伤\n- 推荐运动：登山、慢跑、足球、篮球\n- 饮食建议：增加蛋白质和碳水化合物摄入\n- 训练时间：建议在10:00-16:00之间进行训练'
+            },
+            EAST: {
+                winter: '冬季训练建议：\n- 室内有氧：游泳、跑步机\n- 力量训练：哑铃、弹力带训练\n- 注意事项：注意防潮，选择室内运动，预防关节疼痛\n- 推荐运动：室内游泳、瑜伽、普拉提\n- 饮食建议：增加蛋白质摄入，补充维生素D\n- 训练时间：建议在10:00-16:00之间进行室内训练\n- 极端天气建议：\n  * 气温低于-5℃时，建议完全转为室内训练\n  * 室内温度保持在18-22℃为宜\n  * 训练前充分热身15-20分钟\n  * 准备保暖衣物，防止训练后着凉\n  * 注意室内通风，保持空气流通',
+                summer: '夏季训练建议：\n- 户外有氧：慢跑、骑行（避开高温时段）\n- 力量训练：自重训练、器械训练\n- 注意事项：注意防晒，及时补充水分，应对高湿度\n- 推荐运动：晨跑、夜跑、游泳、沙滩排球\n- 饮食建议：增加电解质补充，注意防暑降温\n- 训练时间：建议在6:00-9:00或18:00-20:00进行户外训练\n- 极端天气建议：\n  * 气温超过32℃且湿度大于80%时，建议转为室内训练\n  * 室内温度保持在24-26℃为宜\n  * 训练强度降低20-30%\n  * 每15-20分钟补充一次水分\n  * 准备防暑药品，如藿香正气水',
+                spring: '春季训练建议：\n- 室内外结合：根据天气选择，如室内瑜伽、户外散步\n- 力量训练：综合训练，提升基础体能\n- 注意事项：注意防潮，及时调整运动计划\n- 推荐运动：徒步、骑行、羽毛球、网球\n- 饮食建议：增加新鲜蔬果摄入，补充维生素\n- 训练时间：建议在9:00-11:00或15:00-17:00进行户外训练',
+                autumn: '秋季训练建议：\n- 户外有氧：海边慢跑、骑行\n- 力量训练：全身性训练，巩固肌肉力量\n- 注意事项：天气宜人，但仍需注意防晒，避免过量\n- 推荐运动：慢跑、骑行、网球、高尔夫\n- 饮食建议：增加蛋白质和碳水化合物摄入\n- 训练时间：建议在10:00-16:00之间进行训练'
+            },
+            CENTRAL: {
+                winter: '冬季训练建议：\n- 室内有氧：跑步机、动感单车\n- 力量训练：深蹲、卧推、硬拉\n- 注意事项：室内外温差大，注意保暖和拉伸\n- 推荐运动：室内游泳、瑜伽、普拉提\n- 饮食建议：增加蛋白质摄入，补充维生素D\n- 训练时间：建议在10:00-16:00之间进行室内训练\n- 极端天气建议：\n  * 气温低于-8℃时，建议完全转为室内训练\n  * 室内温度保持在18-22℃为宜\n  * 训练前充分热身15-20分钟\n  * 准备保暖衣物，防止训练后着凉\n  * 注意室内通风，保持空气流通',
+                summer: '夏季训练建议：\n- 早晚户外：慢跑、快走\n- 室内训练：游泳、力量训练\n- 注意事项：避开高温时段，注意防暑降温，防止脱水\n- 推荐运动：晨跑、夜跑、游泳、沙滩排球\n- 饮食建议：增加电解质补充，注意防暑降温\n- 训练时间：建议在6:00-9:00或18:00-20:00进行户外训练\n- 极端天气建议：\n  * 气温超过33℃时，建议转为室内训练\n  * 室内温度保持在24-26℃为宜\n  * 训练强度降低20-30%\n  * 每15-20分钟补充一次水分\n  * 准备防暑药品，如藿香正气水',
+                spring: '春季训练建议：\n- 户外有氧：慢跑、骑行、徒步\n- 力量训练：综合训练，提升心肺功能\n- 注意事项：天气多变，注意及时增减衣物\n- 推荐运动：徒步、骑行、羽毛球、网球\n- 饮食建议：增加新鲜蔬果摄入，补充维生素\n- 训练时间：建议在9:00-11:00或15:00-17:00进行户外训练',
+                autumn: '秋季训练建议：\n- 户外有氧：慢跑、徒步、登山\n- 力量训练：全身性训练，增强体质\n- 注意事项：气候干燥，注意补水，预防呼吸道疾病\n- 推荐运动：慢跑、徒步、登山、球类运动\n- 饮食建议：增加蛋白质和碳水化合物摄入\n- 训练时间：建议在10:00-16:00之间进行训练'
+            },
+            SOUTHWEST: {
+                winter: '冬季训练建议：\n- 室内有氧：跑步机、瑜伽\n- 力量训练：轻器械训练、自重训练\n- 注意事项：高原地区注意循序渐进，高海拔训练需谨慎\n- 推荐运动：室内游泳、瑜伽、普拉提\n- 饮食建议：增加蛋白质摄入，补充维生素D\n- 训练时间：建议在10:00-16:00之间进行室内训练\n- 极端天气建议：\n  * 气温低于-5℃时，建议完全转为室内训练\n  * 室内温度保持在18-22℃为宜\n  * 训练前充分热身15-20分钟\n  * 准备保暖衣物，防止训练后着凉\n  * 注意室内通风，保持空气流通',
+                summer: '夏季训练建议：\n- 早晚户外：慢跑、快走\n- 室内训练：游泳、力量训练\n- 注意事项：避开高温时段，注意防暑降温，应对高原反应\n- 推荐运动：晨跑、夜跑、游泳、沙滩排球\n- 饮食建议：增加电解质补充，注意防暑降温\n- 训练时间：建议在6:00-9:00或18:00-20:00进行户外训练\n- 极端天气建议：\n  * 气温超过30℃时，建议转为室内训练\n  * 室内温度保持在24-26℃为宜\n  * 训练强度降低20-30%\n  * 每15-20分钟补充一次水分\n  * 准备防暑药品，如藿香正气水',
+                spring: '春季训练建议：\n- 户外有氧：慢跑、徒步、骑行\n- 力量训练：适应性训练，逐步增加强度\n- 注意事项：注意保暖，高原气候多变，及时调整\n- 推荐运动：徒步、骑行、羽毛球、网球\n- 饮食建议：增加新鲜蔬果摄入，补充维生素\n- 训练时间：建议在9:00-11:00或15:00-17:00进行户外训练',
+                autumn: '秋季训练建议：\n- 户外有氧：登山、徒步、慢跑\n- 力量训练：增强心肺功能和耐力\n- 注意事项：注意高原反应，带足补给，防止失温\n- 推荐运动：登山、徒步、慢跑、球类运动\n- 饮食建议：增加蛋白质和碳水化合物摄入\n- 训练时间：建议在10:00-16:00之间进行训练'
+            },
+            NORTHWEST: {
+                winter: '冬季训练建议：\n- 室内有氧：跑步机、室内球类运动\n- 力量训练：全身力量训练，增加肌肉量\n- 注意事项：极端寒冷，注意防寒保暖，谨防冻伤\n- 推荐运动：室内游泳、瑜伽、普拉提\n- 饮食建议：增加蛋白质摄入，补充维生素D\n- 训练时间：建议在10:00-16:00之间进行室内训练\n- 极端天气建议：\n  * 气温低于-15℃时，建议完全转为室内训练\n  * 室内温度保持在18-22℃为宜\n  * 训练前充分热身15-20分钟\n  * 准备保暖衣物，防止训练后着凉\n  * 注意室内通风，保持空气流通',
+                summer: '夏季训练建议：\n- 早晚户外：慢跑、快走\n- 室内训练：游泳、力量训练\n- 注意事项：气候干燥，注意补水和防晒，应对风沙\n- 推荐运动：晨跑、夜跑、游泳、沙滩排球\n- 饮食建议：增加电解质补充，注意防暑降温\n- 训练时间：建议在6:00-9:00或18:00-20:00进行户外训练\n- 极端天气建议：\n  * 气温超过35℃时，建议转为室内训练\n  * 室内温度保持在24-26℃为宜\n  * 训练强度降低20-30%\n  * 每15-20分钟补充一次水分\n  * 准备防暑药品，如藿香正气水',
+                spring: '春季训练建议：\n- 户外有氧：慢跑、徒步、骑行\n- 力量训练：综合训练，适应干燥环境\n- 注意事项：风沙大，注意防护，补充水分\n- 推荐运动：徒步、骑行、羽毛球、网球\n- 饮食建议：增加新鲜蔬果摄入，补充维生素\n- 训练时间：建议在9:00-11:00或15:00-17:00进行户外训练',
+                autumn: '秋季训练建议：\n- 户外有氧：慢跑、徒步、沙漠越野\n- 力量训练：增强体能，适应多变气候\n- 注意事项：昼夜温差大，注意保暖，预防感冒\n- 推荐运动：慢跑、徒步、沙漠越野、球类运动\n- 饮食建议：增加蛋白质和碳水化合物摄入\n- 训练时间：建议在10:00-16:00之间进行训练'
+            }
+        };
+
+        function getRegionSeasonAdvice(region, season) {
+            return regionWorkoutPlans[region]?.[season] || '';
+        }
+
+        // 新增：生成计划主入口
+        async function generatePlan() {
+            try {
+                // 收集当前身体状况
+                const currentForm = document.getElementById('currentForm');
+                const currentData = {};
+                Array.from(currentForm.elements).forEach(el => {
+                    if (el.name) {
+                        if (el.type === 'checkbox') {
+                            if (!currentData[el.name]) currentData[el.name] = [];
+                            if (el.checked) currentData[el.name].push(el.value);
+                        } else {
+                            currentData[el.name] = el.value;
+                        }
+                    }
+                });
+                // 收集目标身体状况
+                const targetForm = document.getElementById('targetForm');
+                const targetData = {};
+                Array.from(targetForm.elements).forEach(el => {
+                    if (el.name) {
+                        if (el.type === 'checkbox') {
+                            if (!targetData[el.name]) targetData[el.name] = [];
+                            if (el.checked) targetData[el.name].push(el.value);
+                        } else {
+                            targetData[el.name] = el.value;
+                        }
+                    }
+                });
+
+                // 校验必填项
+                if (!currentData.height || !currentData.weight || !currentData.age || !currentData.gender || !currentData.sleep_hours || !targetData.targetHeight || !targetData.targetWeight) {
+                    alert('请完整填写所有必填信息！');
+                    return;
+                }
+
+                // 估算达成时长和卡路里
+                const estimate = estimateGoalDurationAndCalories(
+                    { weight: currentData.weight },
+                    { weight: targetData.targetWeight }
+                );
+
+                // 调用生成计划
+                const planHtml = await generateFitnessPlan(currentData, targetData, estimate);
+                const resultsDiv = document.getElementById('results');
+                if (planHtml && planHtml.trim()) {
+                    resultsDiv.innerHTML = planHtml;
+                } else {
+                    resultsDiv.innerHTML = '<div class="text-red-600">生成计划失败，请稍后重试或联系管理员。</div>';
+                }
+                resultsDiv.classList.remove('hidden');
+                window.scrollTo({ top: resultsDiv.offsetTop - 40, behavior: 'smooth' });
+            } catch (e) {
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = '<div class="text-red-600">生成计划时发生错误，请检查输入或联系管理员。</div>';
+                resultsDiv.classList.remove('hidden');
+                console.error('生成计划出错:', e);
+            }
+        }
+        window.generatePlan = generatePlan;
+    </script>
+</body>
+</html> 
